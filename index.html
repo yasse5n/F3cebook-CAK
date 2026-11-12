@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AccountVault 🔐</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #020617;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4c1d95;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+
+        .glass {
+            background: rgba(15, 10, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .glass-light {
+            background: rgba(20, 15, 40, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        .glow-purple {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            color: #94a3b8;
+            background: rgba(15, 10, 30, 0.5);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        .tab-btn:hover {
+            color: #c4b5fd;
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+
+        .tab-active {
+            background: linear-gradient(135deg, #7c3aed, #2563eb) !important;
+            color: white !important;
+            border-color: transparent !important;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(139, 92, 246, 0.9), 0 0 50px rgba(124, 58, 237, 0.4);
+            }
+        }
+
+        .logo-box {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes gradient-shift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .gradient-title {
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399, #a78bfa);
+            background-size: 300% 300%;
+            animation: gradient-shift 4s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-box {
+            border-radius: 12px;
+            padding: 14px 16px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-live {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .stat-dead {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .stat-bad {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .stat-dup {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(67, 56, 202, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .output-box-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            background: rgba(10, 5, 25, 0.8);
+        }
+
+        .output-header {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+        }
+
+        .output-textarea {
+            width: 100%;
+            resize: none;
+            background: transparent;
+            color: #e2e8f0;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            border: none;
+            min-height: 110px;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: white;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.6);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+        }
+
+        .btn-copy {
+            background: rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+        }
+
+        .btn-copy:hover {
+            background: rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-dl {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        .btn-dl:hover {
+            background: rgba(16, 185, 129, 0.35);
+        }
+
+        .input-main {
+            width: 100%;
+            resize: vertical;
+            min-height: 160px;
+            background: rgba(10, 5, 25, 0.8);
+            color: #e2e8f0;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-main:focus {
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .master-lock-btn {
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.4);
+            color: #c4b5fd;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .master-lock-btn:hover {
+            background: rgba(124, 58, 237, 0.35);
+        }
+
+
+        .lang-btn {
+            background: rgba(15, 10, 30, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #94a3b8;
+            padding: 7px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            color: #c4b5fd;
+        }
+
+        .filter-btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .filter-gmail {
+            background: rgba(66, 133, 244, 0.2);
+            border: 1px solid rgba(66, 133, 244, 0.4);
+            color: #93c5fd;
+        }
+
+        .filter-gmail:hover {
+            background: rgba(66, 133, 244, 0.35);
+        }
+
+        .filter-hotmail {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .filter-hotmail:hover {
+            background: rgba(239, 68, 68, 0.35);
+        }
+
+        .filter-yahoo {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fcd34d;
+        }
+
+        .filter-yahoo:hover {
+            background: rgba(245, 158, 11, 0.35);
+        }
+
+        .filter-other {
+            background: rgba(100, 116, 139, 0.2);
+            border: 1px solid rgba(100, 116, 139, 0.35);
+            color: #cbd5e1;
+        }
+
+        .filter-other:hover {
+            background: rgba(100, 116, 139, 0.35);
+        }
+
+        .tools-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #a78bfa;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            margin-bottom: 12px;
+        }
+
+        .highlighted-key {
+            background: rgba(234, 179, 8, 0.25);
+            color: #fde047;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        textarea::placeholder {
+            color: rgba(148, 163, 184, 0.4);
+        }
+
+        input[type="number"] {
+            background: rgba(10, 5, 25, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px dashed rgba(139, 92, 246, 0.4);
+            color: #a78bfa;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .upload-label:hover {
+            background: rgba(124, 58, 237, 0.3);
+            border-color: rgba(139, 92, 246, 0.7);
+        }
+
+        .master-status-bar {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .stat-box {
+                min-width: 90px;
+            }
+
+            .btn-action {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-100"
+    style="background: radial-gradient(ellipse at 20% 0%, rgba(76,29,149,0.25) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(37,99,235,0.15) 0%, transparent 60%), #020617;">
+
+    <!-- ═══════════════════════════════════════════════════════════════ HEADER -->
+    <header class="glass glow-purple sticky top-0 z-50"
+        style="border-top:none;border-left:none;border-right:none;border-bottom:1px solid rgba(139,92,246,0.25);">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4 flex-wrap">
+            <!-- Logo -->
+            <div class="logo-box flex items-center justify-center rounded-xl"
+                style="width:48px;height:48px;background:linear-gradient(135deg,#4c1d95,#1d4ed8);font-size:24px;flex-shrink:0;">
+                🔐
+            </div>
+            <!-- Title -->
+            <div class="flex-1 min-w-0">
+                <div class="gradient-title text-2xl font-black leading-tight" style="font-size:clamp(18px,4vw,26px);">
+                    AccountVault</div>
+                <div class="text-slate-400 text-xs font-medium" id="subtitle">منصة إدارة وفحص حسابات فيسبوك</div>
+            </div>
+            <!-- Right buttons -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <button class="lang-btn" onclick="toggleLanguage()" id="langToggleBtn">EN 🌐</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════ TAB BAR -->
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        <div class="glass rounded-xl p-2 overflow-x-auto">
+            <div class="flex gap-2 min-w-max">
+                <button class="tab-btn tab-active" onclick="switchTab('LIVE')" id="tab-LIVE" data-ar="🚀 لايف"
+                    data-en="🚀 LIVE">🚀 لايف</button>
+                <button class="tab-btn" onclick="switchTab('DUP')" id="tab-DUP" data-ar="🔄 تكرار" data-en="🔄 DUP">🔄
+                    تكرار</button>
+                <button class="tab-btn" onclick="switchTab('MASTER')" id="tab-MASTER" data-ar="🔒 ماستر"
+                    data-en="🔒 MASTER">🔒 ماستر</button>
+                <button class="tab-btn" onclick="switchTab('PASS')" id="tab-PASS" data-ar="🔑 باسورد"
+                    data-en="🔑 PASS">🔑 باسورد</button>
+                <button class="tab-btn" onclick="switchTab('EXCEL')" id="tab-EXCEL" data-ar="📊 إكسل"
+                    data-en="📊 EXCEL">📊 إكسل</button>
+                <button class="tab-btn" onclick="switchTab('SPLIT')" id="tab-SPLIT" data-ar="✂️ تقسيم"
+                    data-en="✂️ Split">✂️ تقسيم</button>
+                <button class="tab-btn" onclick="switchTab('FILTER')" id="tab-FILTER" data-ar="📧 فلتر إيميل"
+                    data-en="📧 Email Filter">📧 فلتر إيميل</button>
+                <button class="tab-btn" onclick="switchTab('TOOLS')" id="tab-TOOLS" data-ar="🔀 أدوات"
+                    data-en="🔀 Tools">🔀 أدوات</button>
+                <button class="tab-btn" onclick="switchTab('FORMAT')" id="tab-FORMAT" data-ar="📋 تنسيق"
+                    data-en="📋 Format">📋 تنسيق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ MAIN CONTENT -->
+    <div class="max-w-7xl mx-auto px-4 mt-4 pb-10">
+
+        <!-- ─── STAT BOXES ─── -->
+        <div class="flex gap-3 flex-wrap mb-4" id="statBoxesRow">
+            <div class="stat-box stat-live flex-1 glass-light">
+                <div class="text-green-400 text-xs font-semibold mb-1" id="labelLive">✅ لايف</div>
+                <div class="text-green-300 text-2xl font-black" id="countBoxLive">0</div>
+            </div>
+            <div class="stat-box stat-dead flex-1 glass-light">
+                <div class="text-red-400 text-xs font-semibold mb-1" id="labelDead">💀 ميت</div>
+                <div class="text-red-300 text-2xl font-black" id="countBoxDead">0</div>
+            </div>
+            <div class="stat-box stat-bad flex-1 glass-light">
+                <div class="text-amber-400 text-xs font-semibold mb-1" id="labelBad">⚠️ كوكي خطأ</div>
+                <div class="text-amber-300 text-2xl font-black" id="countBoxBad">0</div>
+            </div>
+            <div class="stat-box stat-dup flex-1 glass-light">
+                <div class="text-indigo-400 text-xs font-semibold mb-1" id="labelDup">🔁 مكرر</div>
+                <div class="text-indigo-300 text-2xl font-black" id="countBoxDups">0</div>
+            </div>
+        </div>
+
+        <!-- ─── GLASS CARD ─── -->
+        <div class="glass glow-purple rounded-2xl p-5 mb-4">
+
+            <!-- MODE LABEL -->
+            <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div class="text-xs font-bold text-violet-400 tracking-widest uppercase" id="modeLabelDisplay">● LIVE
+                    MODE</div>
+                <!-- MASTER controls (shown only in MASTER tab) -->
+                <div id="masterControls" class="hidden flex items-center gap-2 flex-wrap">
+                    <label for="masterFileInput" class="upload-label">📂 <span id="masterLoadLabel">تحميل
+                            الماستر</span></label>
+                    <input type="file" id="masterFileInput" accept=".txt" onchange="loadMasterFile(event)">
+                    <button class="master-lock-btn" id="masterLockBtn" onclick="toggleMasterLock()">🔓 <span
+                            id="masterLockLabel">قفل الماستر</span></button>
+                </div>
+                <!-- EXCEL controls -->
+                <div id="excelControls" class="hidden flex items-center gap-2 flex-wrap">
+                    <label for="excelFileInput" class="upload-label">📂 <span id="excelUploadLabel">رفع
+                            Excel</span></label>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+                </div>
+                <!-- MAIN file upload -->
+                <div id="mainFileUploadBtn" class="flex items-center gap-2">
+                    <label for="mainFileInput" class="upload-label">📂 <span id="uploadLabel">رفع ملف</span></label>
+                    <input type="file" id="mainFileInput" accept=".txt" onchange="handleMainFileUpload(event)">
+                </div>
+            </div>
+
+            <!-- MASTER STATUS BAR -->
+            <div id="masterStatusBar" class="master-status-bar hidden mb-3"></div>
+
+            <!-- MAIN TEXTAREA (shared, hidden in TOOLS and FILTER) -->
+            <textarea id="rawInput" class="input-main mb-3" rows="7"
+                placeholder="الصق قائمة الحسابات هنا... (uid|pass|cookies أو روابط فيسبوك)"></textarea>
+
+            <!-- PASS OPTIONS -->
+            <div id="passOptions" class="hidden mb-3 glass-light rounded-xl p-3">
+                <div class="text-xs font-bold text-violet-400 mb-2" id="passOptsLabel">⚙️ خيارات هندسة الباسورد</div>
+                <div class="flex flex-wrap gap-3 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="passReverse" class="accent-violet-500"> <span id="passRevLabel">عكس
+                            الباسورد</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="passCapitalize" class="accent-violet-500"> <span
+                            id="passCapLabel">أول حرف كبير</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="passDob" class="accent-violet-500"> <span id="passDobLabel">استخراج
+                            DOB</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="passAddNums" class="accent-violet-500"> <span
+                            id="passNumsLabel">إضافة أرقام (1234)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- SPLIT OPTIONS -->
+            <div id="splitOptions" class="hidden mb-3 glass-light rounded-xl p-3">
+                <div class="text-xs font-bold text-violet-400 mb-2" id="splitOptsLabel">⚙️ خيارات التقسيم</div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <label class="text-slate-300 text-sm" id="splitLinesLabel">سطر لكل ملف:</label>
+                    <input type="number" id="splitLinesPerFile" value="100" min="10" max="10000" style="width:120px;">
+                </div>
+            </div>
+
+            <!-- ACTION BUTTON -->
+            <div class="flex justify-center" id="actionBtnWrapper">
+                <button class="btn-action" id="actionBtn" onclick="handleAction()">
+                    🚀 بدء الفحص الحي
+                </button>
+            </div>
+
+            <!-- TOOLS BUTTONS (shown instead of action btn in TOOLS tab) -->
+            <div id="toolsButtons" class="hidden">
+                <!-- Shuffle/Sort -->
+                <div class="tools-section-title" id="toolsShuffleTitle">🔀 خلط وترتيب القائمة</div>
+                <div class="flex gap-2 flex-wrap mb-4">
+                    <button class="btn-action" style="padding:9px 20px;font-size:13px;" onclick="shuffleList()">🔀 <span
+                            id="btnShuffleLabel">خلط عشوائي</span></button>
+                    <button class="btn-action"
+                        style="padding:9px 20px;font-size:13px;background:linear-gradient(135deg,#059669,#0d9488);"
+                        onclick="sortList(false)">📶 <span id="btnSortAscLabel">ترتيب تصاعدي</span></button>
+                    <button class="btn-action"
+                        style="padding:9px 20px;font-size:13px;background:linear-gradient(135deg,#dc2626,#9333ea);"
+                        onclick="sortList(true)">📶 <span id="btnSortDescLabel">تنازلي</span></button>
+                </div>
+                <!-- 2FA -->
+                <div class="tools-section-title" id="tools2faTitle">🔐 استخراج مفاتيح 2FA</div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="btn-action"
+                        style="padding:9px 20px;font-size:13px;background:linear-gradient(135deg,#b45309,#d97706);"
+                        onclick="extract2FA()">🔑 <span id="btn2faLabel">استخراج 2FA</span></button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ─── FILTER BUTTONS (only for FILTER tab) ─── -->
+        <div id="filterBtnsRow" class="hidden glass rounded-2xl p-4 mb-4">
+            <div class="text-xs font-bold text-violet-400 mb-3" id="filterQuickLabel">⚡ فلتر سريع</div>
+            <div class="flex gap-2 flex-wrap mb-3">
+                <button class="filter-btn filter-gmail" onclick="runFilter('gmail')">🔵 Gmail</button>
+                <button class="filter-btn filter-hotmail" onclick="runFilter('hotmail')">🔴 Hotmail/Outlook</button>
+                <button class="filter-btn filter-yahoo" onclick="runFilter('yahoo')">🟡 Yahoo</button>
+                <button class="filter-btn filter-other" onclick="runFilter('other')">⚪ <span
+                        id="filterOtherLabel">أخرى</span></button>
+            </div>
+            <button class="btn-action" onclick="runFilterAll()">📧 <span id="btnFilterAllLabel">فلتر
+                    الكل</span></button>
+        </div>
+
+        <!-- ─── OUTPUT BOXES ─── -->
+        <!-- Standard 4-box layout (LIVE / DUP / MASTER / PASS) -->
+        <div id="standardOutputs" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <!-- Live / Result 1 -->
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-green-400 text-xs font-bold" id="outLabel1">✅ حسابات لايف</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputLive')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputLive','live.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputLive" class="output-textarea" readonly
+                    placeholder="النتائج الحية هنا..."></textarea>
+            </div>
+            <!-- Dead / Result 2 -->
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-red-400 text-xs font-bold" id="outLabel2">💀 حسابات ميتة</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputDead')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputDead','dead.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputDead" class="output-textarea" readonly
+                    placeholder="الحسابات الميتة هنا..."></textarea>
+            </div>
+            <!-- Bad / Result 3 -->
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-amber-400 text-xs font-bold" id="outLabel3">⚠️ كوكي خطأ</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputBad')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputBad','bad.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputBad" class="output-textarea" readonly
+                    placeholder="الكوكيز الخاطئة هنا..."></textarea>
+            </div>
+            <!-- Dups / Result 4 -->
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-indigo-400 text-xs font-bold" id="outLabel4">🔁 مكررات</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputDups')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputDups','dups.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputDups" class="output-textarea" readonly placeholder="المكررات هنا..."></textarea>
+            </div>
+        </div>
+
+        <!-- EXCEL OUTPUT (single wide box) -->
+        <div id="excelOutput" class="hidden output-box-wrapper mb-4">
+            <div class="output-header">
+                <span class="text-cyan-400 text-xs font-bold" id="excelOutLabel">📊 نتيجة التحويل</span>
+                <div class="flex gap-1">
+                    <button class="btn-sm btn-copy" onclick="copyBox('outputExcel')">📋</button>
+                    <button class="btn-sm btn-dl" onclick="downloadTxt('outputExcel','converted.txt')">💾 TXT</button>
+                    <button class="btn-sm" style="background:rgba(5,150,105,0.25);color:#6ee7b7;"
+                        onclick="exportCurrentToExcel()">📊 Excel</button>
+                </div>
+            </div>
+            <textarea id="outputExcel" class="output-textarea" readonly style="min-height:200px;"
+                placeholder="نتيجة التحويل هنا..."></textarea>
+        </div>
+
+        <!-- SPLIT OUTPUT -->
+        <div id="splitOutput" class="hidden mb-4">
+            <div class="output-box-wrapper mb-3">
+                <div class="output-header">
+                    <span class="text-violet-400 text-xs font-bold" id="splitPreviewLabel">👁️ معاينة الجزء الأول</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputSplitPreview')">📋</button>
+                    </div>
+                </div>
+                <textarea id="outputSplitPreview" class="output-textarea" readonly style="min-height:150px;"
+                    placeholder="معاينة الجزء الأول هنا..."></textarea>
+            </div>
+            <div id="splitStats" class="text-center text-cyan-400 text-sm font-bold py-2"></div>
+            <div class="flex justify-center gap-3 flex-wrap mt-2">
+                <button class="btn-action" style="padding:9px 24px;font-size:13px;" id="splitDownloadBtn"
+                    onclick="downloadSplitZip()" disabled>📦 <span id="splitDlLabel">تحميل ZIP</span></button>
+            </div>
+        </div>
+
+        <!-- FILTER OUTPUT (4 boxes) -->
+        <div id="filterOutput" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-blue-400 text-xs font-bold">🔵 Gmail (<span id="gmailCount">0</span>)</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputGmail')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputGmail','gmail.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputGmail" class="output-textarea" readonly placeholder="@gmail.com ..."></textarea>
+            </div>
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-red-400 text-xs font-bold">🔴 Hotmail/Outlook (<span
+                            id="hotmailCount">0</span>)</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputHotmail')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputHotmail','hotmail.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputHotmail" class="output-textarea" readonly
+                    placeholder="@hotmail / @outlook ..."></textarea>
+            </div>
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-yellow-400 text-xs font-bold">🟡 Yahoo (<span id="yahooCount">0</span>)</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputYahoo')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputYahoo','yahoo.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputYahoo" class="output-textarea" readonly placeholder="@yahoo ..."></textarea>
+            </div>
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-slate-400 text-xs font-bold">⚪ <span id="filterOtherOutLabel">أخرى</span> (<span
+                            id="otherCount">0</span>)</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputOther')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputOther','other.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputOther" class="output-textarea" readonly placeholder="إيميلات أخرى..."></textarea>
+            </div>
+        </div>
+
+        <!-- TOOLS OUTPUT -->
+        <div id="toolsOutput" class="hidden mb-4">
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-violet-400 text-xs font-bold" id="toolsOutLabel">📋 النتيجة</span>
+                    <div class="flex gap-1">
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputTools')">📋</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputTools','result.txt')">💾</button>
+                    </div>
+                </div>
+                <textarea id="outputTools" class="output-textarea" readonly style="min-height:200px;"
+                    placeholder="النتيجة هنا..."></textarea>
+            </div>
+        </div>
+
+        <!-- FORMAT OUTPUT -->
+        <div id="formatOutput" class="hidden mb-4">
+            <!-- Options bar -->
+            <div class="glass-light rounded-xl p-4 mb-3">
+                <div class="text-xs font-bold text-violet-400 mb-3" id="formatOptsTitle">⚙️ إعدادات التنسيق</div>
+                <div class="flex flex-wrap gap-4 mb-3 text-sm text-slate-300">
+                    <!-- Field order -->
+                    <div>
+                        <div class="text-xs text-violet-300 mb-1" id="formatFieldOrderLabel">ترتيب الحقول في السطر:
+                        </div>
+                        <select id="formatFieldOrder"
+                            class="bg-slate-900 border border-violet-700/40 text-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-violet-500">
+                            <option value="uid|pass|key" id="fOpt1">UID | كلمة السر | المفتاح</option>
+                            <option value="uid|key|pass" id="fOpt2">UID | المفتاح | كلمة السر</option>
+                            <option value="uid|pass" id="fOpt3">UID | كلمة السر (بدون مفتاح)</option>
+                            <option value="uid|key" id="fOpt4">UID | المفتاح فقط</option>
+                        </select>
+                    </div>
+                    <!-- Separator -->
+                    <div>
+                        <div class="text-xs text-violet-300 mb-1" id="formatSepLabel">الفاصل:</div>
+                        <select id="formatSeparator"
+                            class="bg-slate-900 border border-violet-700/40 text-slate-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-violet-500">
+                            <option value="|">خط عمودي |</option>
+                            <option value=":">نقطتان :</option>
+                            <option value=";">فاصلة منقوطة ;</option>
+                            <option value=",">فاصلة ,</option>
+                            <option value="	">Tab</option>
+                        </select>
+                    </div>
+                    <!-- Account label toggle -->
+                    <label class="flex items-center gap-2 cursor-pointer self-end pb-1">
+                        <input type="checkbox" id="formatShowNum" checked class="accent-violet-500">
+                        <span id="formatShowNumLabel">إظهار رقم الحساب</span>
+                    </label>
+                </div>
+                <!-- Label customization -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div>
+                        <div class="text-violet-300 mb-1" id="fLblEmail">تسمية الإيميل/UID:</div>
+                        <input type="text" id="formatLabelEmail" value="📧 Email"
+                            class="w-full bg-slate-900 border border-violet-700/30 text-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-violet-500 text-xs">
+                    </div>
+                    <div>
+                        <div class="text-violet-300 mb-1" id="fLblPass">تسمية الباسورد:</div>
+                        <input type="text" id="formatLabelPass" value="🔒 Password"
+                            class="w-full bg-slate-900 border border-violet-700/30 text-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-violet-500 text-xs">
+                    </div>
+                    <div>
+                        <div class="text-violet-300 mb-1" id="fLblKey">تسمية المفتاح:</div>
+                        <input type="text" id="formatLabelKey" value="🔑 Key"
+                            class="w-full bg-slate-900 border border-violet-700/30 text-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-violet-500 text-xs">
+                    </div>
+                    <div>
+                        <div class="text-violet-300 mb-1" id="fLblAccount">تسمية الحساب:</div>
+                        <input type="text" id="formatLabelAccount" value="Account"
+                            class="w-full bg-slate-900 border border-violet-700/30 text-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-violet-500 text-xs">
+                    </div>
+                </div>
+            </div>
+            <!-- Output -->
+            <div class="output-box-wrapper">
+                <div class="output-header">
+                    <span class="text-violet-400 text-xs font-bold" id="formatOutLabel">📋 النتيجة المنسقة</span>
+                    <div class="flex gap-1 items-center">
+                        <span id="formatCountBadge" class="text-slate-500 text-xs mr-2"></span>
+                        <button class="btn-sm btn-copy" onclick="copyBox('outputFormat')">📋 نسخ</button>
+                        <button class="btn-sm btn-dl" onclick="downloadTxt('outputFormat','formatted_accounts.txt')">💾
+                            تحميل</button>
+                    </div>
+                </div>
+                <textarea id="outputFormat" class="output-textarea" readonly
+                    style="min-height:320px; font-family:'Cairo',sans-serif; font-size:13px; line-height:1.7;"
+                    placeholder="النتيجة المنسقة ستظهر هنا..."></textarea>
+            </div>
+        </div>
+
+    </div><!-- /main content -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ FOOTER -->
+    <footer class="text-center text-slate-600 text-xs py-4">
+        AccountVault 🔐
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════════ SCRIPTS -->
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // DICTIONARY
+        // ═══════════════════════════════════════════════════════════════
+        const DICTIONARY = {
+            ar: {
+                subtitle: "منصة إدارة وفحص حسابات فيسبوك",
+                emptyAlert: "الرجاء لصق قائمة أولاً!",
+                checking: "⏳ جارٍ الفحص...",
+                tabLive: "🚀 لايف",
+                tabDup: "🔄 تكرار",
+                tabMaster: "🔒 ماستر",
+                tabPass: "🔑 باسورد",
+                tabExcel: "📊 إكسل",
+                tabSplit: "✂️ تقسيم",
+                tabFilter: "📧 فلتر إيميل",
+                tabTools: "🔀 أدوات",
+                btnLive: "🚀 بدء الفحص الحي",
+                btnDup: "🔄 إزالة التكرار",
+                btnMaster: "🔒 مقارنة بالماستر",
+                btnPass: "🔑 معالجة الباسورد",
+                btnExcelToTxt: "📊 تحويل Excel ← TXT",
+                btnTxtToExcel: "📊 تحويل TXT → Excel",
+                btnSplit: "✂️ تقسيم وتحميل الملفات",
+                btnFilterAll: "📧 فلتر الكل",
+                modeLabel: { LIVE: "● LIVE MODE", DUP: "● DUP MODE", MASTER: "● MASTER MODE", PASS: "● PASS MODE", EXCEL: "● EXCEL MODE", SPLIT: "● SPLIT MODE", FILTER: "● FILTER MODE", TOOLS: "● TOOLS MODE" },
+                labelLive: "✅ لايف", labelDead: "💀 ميت", labelBad: "⚠️ كوكي خطأ", labelDup: "🔁 مكرر",
+                outLabel1: "✅ حسابات لايف", outLabel2: "💀 حسابات ميتة", outLabel3: "⚠️ كوكي خطأ", outLabel4: "🔁 مكررات",
+                masterLoadLabel: "تحميل الماستر",
+                masterLockLabel: "قفل الماستر",
+                masterUnlockLabel: "فتح الماستر",
+                uploadLabel: "رفع ملف",
+                excelUploadLabel: "رفع Excel",
+                excelOutLabel: "📊 نتيجة التحويل",
+                passOptsLabel: "⚙️ خيارات هندسة الباسورد",
+                passRevLabel: "عكس الباسورد",
+                passCapLabel: "أول حرف كبير",
+                passDobLabel: "استخراج DOB",
+                passNumsLabel: "إضافة أرقام (1234)",
+                splitOptsLabel: "⚙️ خيارات التقسيم",
+                splitLinesLabel: "سطر لكل ملف:",
+                splitPreviewLabel: "👁️ معاينة الجزء الأول",
+                splitDlLabel: "تحميل ZIP",
+                filterQuickLabel: "⚡ فلتر سريع",
+                filterOtherLabel: "أخرى",
+                filterOtherOutLabel: "أخرى",
+                btnFilterAllLabel: "فلتر الكل",
+                toolsShuffleTitle: "🔀 خلط وترتيب القائمة",
+                tools2faTitle: "🔐 استخراج مفاتيح 2FA",
+                btnShuffleLabel: "خلط عشوائي",
+                btnSortAscLabel: "ترتيب تصاعدي",
+                btnSortDescLabel: "تنازلي",
+                btn2faLabel: "استخراج 2FA",
+                toolsOutLabel: "📋 النتيجة",
+            },
+            en: {
+                subtitle: "Facebook Account Management & Checking Platform",
+                emptyAlert: "Please paste a list first!",
+                checking: "⏳ Checking...",
+                tabLive: "🚀 LIVE",
+                tabDup: "🔄 DUP",
+                tabMaster: "🔒 MASTER",
+                tabPass: "🔑 PASS",
+                tabExcel: "📊 EXCEL",
+                tabSplit: "✂️ Split",
+                tabFilter: "📧 Email Filter",
+                tabTools: "🔀 Tools",
+                btnLive: "🚀 Start Live Check",
+                btnDup: "🔄 Remove Duplicates",
+                btnMaster: "🔒 Compare to Master",
+                btnPass: "🔑 Process Passwords",
+                btnExcelToTxt: "📊 Convert Excel ← TXT",
+                btnTxtToExcel: "📊 Convert TXT → Excel",
+                btnSplit: "✂️ Split & Download",
+                btnFilterAll: "📧 Filter All",
+                modeLabel: { LIVE: "● LIVE MODE", DUP: "● DUP MODE", MASTER: "● MASTER MODE", PASS: "● PASS MODE", EXCEL: "● EXCEL MODE", SPLIT: "● SPLIT MODE", FILTER: "● FILTER MODE", TOOLS: "● TOOLS MODE" },
+                labelLive: "✅ Live", labelDead: "💀 Dead", labelBad: "⚠️ Bad Cookie", labelDup: "🔁 Duplicates",
+                outLabel1: "✅ Live Accounts", outLabel2: "💀 Dead Accounts", outLabel3: "⚠️ Bad Cookies", outLabel4: "🔁 Duplicates",
+                masterLoadLabel: "Load Master",
+                masterLockLabel: "Lock Master",
+                masterUnlockLabel: "Unlock Master",
+                uploadLabel: "Upload File",
+                excelUploadLabel: "Upload Excel",
+                excelOutLabel: "📊 Conversion Result",
+                passOptsLabel: "⚙️ Password Engineering Options",
+                passRevLabel: "Reverse Password",
+                passCapLabel: "Capitalize First",
+                passDobLabel: "Extract DOB",
+                passNumsLabel: "Add Numbers (1234)",
+                splitOptsLabel: "⚙️ Split Options",
+                splitLinesLabel: "Lines per file:",
+                splitPreviewLabel: "👁️ First Part Preview",
+                splitDlLabel: "Download ZIP",
+                filterQuickLabel: "⚡ Quick Filter",
+                filterOtherLabel: "Others",
+                filterOtherOutLabel: "Others",
+                btnFilterAllLabel: "Filter All",
+                toolsShuffleTitle: "🔀 Shuffle & Sort List",
+                tools2faTitle: "🔐 2FA Key Extractor",
+                btnShuffleLabel: "Shuffle Random",
+                btnSortAscLabel: "Sort Ascending",
+                btnSortDescLabel: "Descending",
+                btn2faLabel: "Extract 2FA",
+                toolsOutLabel: "📋 Result",
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        let currentLang = 'ar';
+        let currentTab = 'LIVE';
+        let masterList = new Set();
+        let masterLocked = false;
+        let splitChunks = [];
+        let inputElem = null;
+
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            inputElem = document.getElementById('rawInput');
+            // restore master from localStorage
+            const saved = localStorage.getItem('masterList');
+            if (saved) {
+                try {
+                    const arr = JSON.parse(saved);
+                    masterList = new Set(arr);
+                    updateMasterStatusBar();
+                } catch (e) { }
+            }
+            setAppMode('LIVE');
+            applyLang();
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // LANGUAGE
+        // ═══════════════════════════════════════════════════════════════
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langToggleBtn').textContent = currentLang === 'ar' ? 'EN 🌐' : 'AR 🌐';
+            applyLang();
+            setAppMode(currentTab);
+        }
+
+        function applyLang() {
+            const D = DICTIONARY[currentLang];
+            document.getElementById('subtitle').textContent = D.subtitle;
+            document.getElementById('labelLive').textContent = D.labelLive;
+            document.getElementById('labelDead').textContent = D.labelDead;
+            document.getElementById('labelBad').textContent = D.labelBad;
+            document.getElementById('labelDup').textContent = D.labelDup;
+            document.getElementById('outLabel1').textContent = D.outLabel1;
+            document.getElementById('outLabel2').textContent = D.outLabel2;
+            document.getElementById('outLabel3').textContent = D.outLabel3;
+            document.getElementById('outLabel4').textContent = D.outLabel4;
+            document.getElementById('masterLoadLabel').textContent = D.masterLoadLabel;
+            document.getElementById('masterLockLabel').textContent = masterLocked ? D.masterUnlockLabel : D.masterLockLabel;
+            document.getElementById('uploadLabel').textContent = D.uploadLabel;
+            document.getElementById('excelUploadLabel').textContent = D.excelUploadLabel;
+            document.getElementById('excelOutLabel').textContent = D.excelOutLabel;
+            document.getElementById('passOptsLabel').textContent = D.passOptsLabel;
+            document.getElementById('passRevLabel').textContent = D.passRevLabel;
+            document.getElementById('passCapLabel').textContent = D.passCapLabel;
+            document.getElementById('passDobLabel').textContent = D.passDobLabel;
+            document.getElementById('passNumsLabel').textContent = D.passNumsLabel;
+            document.getElementById('splitOptsLabel').textContent = D.splitOptsLabel;
+            document.getElementById('splitLinesLabel').textContent = D.splitLinesLabel;
+            document.getElementById('splitPreviewLabel').textContent = D.splitPreviewLabel;
+            document.getElementById('splitDlLabel').textContent = D.splitDlLabel;
+            document.getElementById('filterQuickLabel').textContent = D.filterQuickLabel;
+            document.getElementById('filterOtherLabel').textContent = D.filterOtherLabel;
+            document.getElementById('filterOtherOutLabel').textContent = D.filterOtherOutLabel;
+            document.getElementById('btnFilterAllLabel').textContent = D.btnFilterAllLabel;
+            document.getElementById('toolsShuffleTitle').textContent = D.toolsShuffleTitle;
+            document.getElementById('tools2faTitle').textContent = D.tools2faTitle;
+            document.getElementById('btnShuffleLabel').textContent = D.btnShuffleLabel;
+            document.getElementById('btnSortAscLabel').textContent = D.btnSortAscLabel;
+            document.getElementById('btnSortDescLabel').textContent = D.btnSortDescLabel;
+            document.getElementById('btn2faLabel').textContent = D.btn2faLabel;
+            document.getElementById('toolsOutLabel').textContent = D.toolsOutLabel;
+            // tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const key = currentLang === 'ar' ? btn.dataset.ar : btn.dataset.en;
+                if (key) btn.textContent = key;
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TAB SWITCHING
+        // ═══════════════════════════════════════════════════════════════
+        function switchTab(mode) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+            const tabEl = document.getElementById('tab-' + mode);
+            if (tabEl) tabEl.classList.add('tab-active');
+            currentTab = mode;
+            setAppMode(mode);
+        }
+
+        function setAppMode(mode) {
+            const D = DICTIONARY[currentLang];
+            currentTab = mode;
+
+            // Mode label
+            document.getElementById('modeLabelDisplay').textContent = D.modeLabel[mode] || '● MODE';
+
+            // Hide/show rawInput
+            const rawInputEl = document.getElementById('rawInput');
+            rawInputEl.style.display = (mode === 'TOOLS') ? 'none' : '';
+
+            // Hide all optional panels first
+            document.getElementById('masterControls').classList.add('hidden');
+            document.getElementById('excelControls').classList.add('hidden');
+            document.getElementById('mainFileUploadBtn').classList.remove('hidden');
+            document.getElementById('masterStatusBar').classList.add('hidden');
+            document.getElementById('passOptions').classList.add('hidden');
+            document.getElementById('splitOptions').classList.add('hidden');
+            document.getElementById('actionBtnWrapper').classList.remove('hidden');
+            document.getElementById('toolsButtons').classList.add('hidden');
+
+            // Hide all outputs
+            document.getElementById('standardOutputs').classList.remove('hidden');
+            document.getElementById('excelOutput').classList.add('hidden');
+            document.getElementById('splitOutput').classList.add('hidden');
+            document.getElementById('filterOutput').classList.add('hidden');
+            document.getElementById('filterBtnsRow').classList.add('hidden');
+            document.getElementById('toolsOutput').classList.add('hidden');
+
+            // Stat boxes visibility
+            document.getElementById('statBoxesRow').classList.remove('hidden');
+
+            const btn = document.getElementById('actionBtn');
+            btn.disabled = false;
+
+            if (mode === 'LIVE') {
+                btn.innerHTML = D.btnLive;
+                document.getElementById('outLabel1').textContent = D.outLabel1;
+                document.getElementById('outLabel2').textContent = D.outLabel2;
+                document.getElementById('outLabel3').textContent = D.outLabel3;
+                document.getElementById('outLabel4').textContent = D.outLabel4;
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة الحسابات هنا... (uid|pass|cookies أو روابط فيسبوك)" : "Paste account list here... (uid|pass|cookies or Facebook links)";
+            }
+            else if (mode === 'DUP') {
+                btn.innerHTML = D.btnDup;
+                document.getElementById('outLabel1').textContent = currentLang === 'ar' ? "✅ حسابات فريدة" : "✅ Unique Accounts";
+                document.getElementById('outLabel2').textContent = currentLang === 'ar' ? "🔁 مكررة (مرئية بفريدة)" : "🔁 Duplicates";
+                document.getElementById('outLabel3').textContent = currentLang === 'ar' ? "⚠️ UID فارغ" : "⚠️ No UID";
+                document.getElementById('outLabel4').textContent = D.outLabel4;
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة تريد إزالة التكرار منها..." : "Paste list to deduplicate...";
+            }
+            else if (mode === 'MASTER') {
+                btn.innerHTML = D.btnMaster;
+                document.getElementById('masterControls').classList.remove('hidden');
+                document.getElementById('masterStatusBar').classList.remove('hidden');
+                document.getElementById('mainFileUploadBtn').classList.add('hidden');
+                document.getElementById('outLabel1').textContent = currentLang === 'ar' ? "✅ جديد (غير موجود في الماستر)" : "✅ New (not in master)";
+                document.getElementById('outLabel2').textContent = currentLang === 'ar' ? "🔒 موجود في الماستر" : "🔒 In Master";
+                document.getElementById('outLabel3').textContent = currentLang === 'ar' ? "⚠️ UID فارغ" : "⚠️ No UID";
+                document.getElementById('outLabel4').textContent = D.outLabel4;
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة المقارنة..." : "Paste list to compare against master...";
+                updateMasterStatusBar();
+            }
+            else if (mode === 'PASS') {
+                btn.innerHTML = D.btnPass;
+                document.getElementById('passOptions').classList.remove('hidden');
+                document.getElementById('outLabel1').textContent = currentLang === 'ar' ? "🔑 باسوردات مهندسة" : "🔑 Engineered Passwords";
+                document.getElementById('outLabel2').textContent = currentLang === 'ar' ? "📋 uid|pass أصلي" : "📋 uid|pass original";
+                document.getElementById('outLabel3').textContent = currentLang === 'ar' ? "📅 uid|DOB" : "📅 uid|DOB";
+                document.getElementById('outLabel4').textContent = currentLang === 'ar' ? "📋 نتيجة الكل" : "📋 All results";
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة uid|pass هنا..." : "Paste uid|pass list here...";
+            }
+            else if (mode === 'EXCEL') {
+                document.getElementById('standardOutputs').classList.add('hidden');
+                document.getElementById('excelOutput').classList.remove('hidden');
+                document.getElementById('statBoxesRow').classList.add('hidden');
+                document.getElementById('excelControls').classList.remove('hidden');
+                document.getElementById('mainFileUploadBtn').classList.add('hidden');
+                btn.innerHTML = D.btnTxtToExcel;
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة TXT هنا للتحويل..." : "Paste TXT list here to convert...";
+            }
+            else if (mode === 'SPLIT') {
+                document.getElementById('standardOutputs').classList.add('hidden');
+                document.getElementById('splitOutput').classList.remove('hidden');
+                document.getElementById('splitOptions').classList.remove('hidden');
+                document.getElementById('statBoxesRow').classList.add('hidden');
+                btn.innerHTML = D.btnSplit;
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق القائمة هنا لتقسيمها..." : "Paste list here to split...";
+            }
+            else if (mode === 'FILTER') {
+                document.getElementById('standardOutputs').classList.add('hidden');
+                document.getElementById('filterOutput').classList.remove('hidden');
+                document.getElementById('filterBtnsRow').classList.remove('hidden');
+                document.getElementById('actionBtnWrapper').classList.add('hidden');
+                document.getElementById('statBoxesRow').classList.add('hidden');
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمة الإيميلات هنا..." : "Paste email list here...";
+            }
+            else if (mode === 'TOOLS') {
+                document.getElementById('standardOutputs').classList.add('hidden');
+                document.getElementById('toolsOutput').classList.remove('hidden');
+                document.getElementById('actionBtnWrapper').classList.add('hidden');
+                document.getElementById('toolsButtons').classList.remove('hidden');
+                document.getElementById('statBoxesRow').classList.add('hidden');
+                // Show textarea for tools (re-enable it since we hide it)
+                rawInputEl.style.display = '';
+                rawInputEl.placeholder = currentLang === 'ar' ? "الصق قائمتك هنا..." : "Paste your list here...";
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // HANDLE ACTION BUTTON
+        // ═══════════════════════════════════════════════════════════════
+        function handleAction() {
+            if (currentTab === 'LIVE') startLiveCheck();
+            else if (currentTab === 'DUP') runOfflineDeduplication();
+            else if (currentTab === 'MASTER') runMasterComparison();
+            else if (currentTab === 'PASS') processPasswords();
+            else if (currentTab === 'EXCEL') exportTxtToExcelSheet();
+            else if (currentTab === 'SPLIT') runSplitter();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CORE FB LOGIC — PRESERVED EXACTLY
+        // ═══════════════════════════════════════════════════════════════
+        function getUidFast(line) {
+            let clean = line.trim();
+            if (!clean) return { uid: null, status: 'DEAD' };
+            try { clean = decodeURIComponent(clean); } catch (e) { }
+            if (clean.includes("c_user=")) {
+                const m = clean.match(/c_user=(\d+)/);
+                return m ? { uid: m[1], status: 'VALID' } : { uid: null, status: 'BAD_COOKIE' };
+            }
+            if (["datr=", "xs=", "fr="].some(k => clean.includes(k))) return { uid: null, status: 'BAD_COOKIE' };
+            const linkMatch = clean.match(/(?:id=|profile\.php\?id=|\/people\/[^\/]+\/|\/)(\d{7,20})(?:[/?\&|:#\s]|$)/);
+            if (linkMatch && linkMatch[1] !== "1" && linkMatch[1] !== "4") return { uid: linkMatch[1], status: 'VALID' };
+            const parts = clean.split(/[|:;,\t\s]+/);
+            for (let p of parts) {
+                let cp = p.trim();
+                if (/^\d+$/.test(cp) && (cp.length >= 14 && cp.length <= 16) && (cp.startsWith("1000") || cp.startsWith("615") || cp.startsWith("10") || cp.startsWith("61"))) {
+                    return { uid: cp, status: 'VALID' };
+                }
+            }
+            let p0 = parts[0] ? parts[0].trim() : "";
+            if (/^\d+$/.test(p0) && p0.length >= 4 && p0.length <= 18) return { uid: p0, status: 'VALID' };
+            return { uid: null, status: 'DEAD' };
+        }
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function checkAccountClient(line, retryCount = 0) {
+            const { uid, status } = getUidFast(line);
+            if (status === 'BAD_COOKIE') return { status: 'BAD_COOKIE', line };
+            if (!uid || status === 'DEAD') return { status: 'DEAD', line };
+            const url = `https://graph.facebook.com/${uid}/picture?type=normal`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            try {
+                const res = await fetch(url, { method: 'GET', mode: 'cors', signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.status === 429) return { status: 'RATE_LIMITED', line };
+                const location = res.url || "";
+                const deadIndicators = ["143086968_2856368904622192", "1005797_761751890539126", "84628273_176159830245851", "default_avatar", "rsrc.php", "static.xx.fbcdn.net"];
+                if (!location.includes("fbcdn.net") && !location.includes("fbsbx.com")) return { status: 'DEAD', line };
+                if (deadIndicators.some(bad => location.includes(bad))) return { status: 'DEAD', line };
+                return { status: 'LIVE', line };
+            } catch (e) {
+                clearTimeout(timeoutId);
+                if (retryCount < 1) { await sleep(500); return await checkAccountClient(line, retryCount + 1); }
+                return { status: 'NET_ERROR', line };
+            }
+        }
+
+        async function startLiveCheck() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const btn = document.getElementById('actionBtn');
+            btn.innerHTML = DICTIONARY[currentLang].checking;
+            btn.disabled = true;
+            const rawLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const seen = new Set();
+            const uniqueLines = [];
+            const dups = [];
+            rawLines.forEach(line => {
+                const { uid } = getUidFast(line);
+                const key = uid || line;
+                if (seen.has(key)) dups.push(line);
+                else { seen.add(key); uniqueLines.push(line); }
+            });
+            document.getElementById('countBoxDups').innerText = dups.length;
+            document.getElementById('outputDups').value = dups.join('\n');
+            const CONCURRENCY_LIMIT = 25;
+            const DELAY_BETWEEN_REQUESTS = 15;
+            const live = [], dead = [], bad = [];
+            let idx = 0;
+            let consecutiveBlocks = 0;
+            async function worker() {
+                while (idx < uniqueLines.length) {
+                    const currentIndex = idx++;
+                    const currentLine = uniqueLines[currentIndex];
+                    if (DELAY_BETWEEN_REQUESTS > 0) await sleep(DELAY_BETWEEN_REQUESTS);
+                    let res = await checkAccountClient(currentLine);
+                    if (res.status === 'RATE_LIMITED' || res.status === 'NET_ERROR') {
+                        consecutiveBlocks++;
+                        if (consecutiveBlocks >= 4) { btn.innerHTML = "⏳ تبريد حظر فيسبوك (3 ثوانٍ)..."; await sleep(3000); consecutiveBlocks = 0; btn.innerHTML = DICTIONARY[currentLang].checking; }
+                        res = await checkAccountClient(currentLine);
+                    } else { consecutiveBlocks = 0; }
+                    if (res.status === 'LIVE') live.push(res.line);
+                    else if (res.status === 'BAD_COOKIE') bad.push(res.line);
+                    else dead.push(res.line);
+                    document.getElementById('countBoxLive').innerText = live.length;
+                    document.getElementById('countBoxDead').innerText = dead.length;
+                    document.getElementById('countBoxBad').innerText = bad.length;
+                }
+            }
+            const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, uniqueLines.length) }, () => worker());
+            await Promise.all(workers);
+            document.getElementById('outputLive').value = live.join('\n');
+            document.getElementById('outputDead').value = dead.join('\n');
+            document.getElementById('outputBad').value = bad.join('\n');
+            btn.disabled = false;
+            btn.innerHTML = DICTIONARY[currentLang].btnLive;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DEDUPLICATION
+        // ═══════════════════════════════════════════════════════════════
+        function runOfflineDeduplication() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const seen = new Set();
+            const unique = [];
+            const dups = [];
+            const noUid = [];
+            lines.forEach(line => {
+                const { uid, status } = getUidFast(line);
+                if (!uid) { noUid.push(line); return; }
+                if (seen.has(uid)) dups.push(line);
+                else { seen.add(uid); unique.push(line); }
+            });
+            document.getElementById('outputLive').value = unique.join('\n');
+            document.getElementById('outputDups').value = dups.join('\n');
+            document.getElementById('outputBad').value = noUid.join('\n');
+            document.getElementById('outputDead').value = '';
+            document.getElementById('countBoxLive').innerText = unique.length;
+            document.getElementById('countBoxDups').innerText = dups.length;
+            document.getElementById('countBoxBad').innerText = noUid.length;
+            document.getElementById('countBoxDead').innerText = 0;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // MASTER COMPARISON
+        // ═══════════════════════════════════════════════════════════════
+        function loadMasterFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+                masterList = new Set();
+                lines.forEach(line => {
+                    const { uid } = getUidFast(line);
+                    if (uid) masterList.add(uid);
+                    else masterList.add(line);
+                });
+                localStorage.setItem('masterList', JSON.stringify([...masterList]));
+                updateMasterStatusBar();
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function updateMasterStatusBar() {
+            const bar = document.getElementById('masterStatusBar');
+            if (masterList.size === 0) {
+                bar.textContent = currentLang === 'ar' ? '⚠️ لا يوجد ماستر محمّل' : '⚠️ No master list loaded';
+                bar.style.background = 'rgba(239,68,68,0.15)';
+                bar.style.border = '1px solid rgba(239,68,68,0.3)';
+                bar.style.color = '#fca5a5';
+            } else {
+                const lockIcon = masterLocked ? '🔒' : '🔓';
+                bar.textContent = `${lockIcon} ${currentLang === 'ar' ? 'الماستر محمّل:' : 'Master loaded:'} ${masterList.size.toLocaleString()} ${currentLang === 'ar' ? 'سجل' : 'records'}`;
+                bar.style.background = masterLocked ? 'rgba(124,58,237,0.2)' : 'rgba(16,185,129,0.15)';
+                bar.style.border = masterLocked ? '1px solid rgba(124,58,237,0.4)' : '1px solid rgba(16,185,129,0.3)';
+                bar.style.color = masterLocked ? '#c4b5fd' : '#6ee7b7';
+            }
+        }
+
+        function toggleMasterLock() {
+            masterLocked = !masterLocked;
+            applyMasterLockState();
+            updateMasterStatusBar();
+        }
+
+        function applyMasterLockState() {
+            const D = DICTIONARY[currentLang];
+            document.getElementById('masterLockLabel').textContent = masterLocked ? D.masterUnlockLabel : D.masterLockLabel;
+            document.getElementById('masterFileInput').disabled = masterLocked;
+        }
+
+        function runMasterComparison() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            if (masterList.size === 0) return alert(currentLang === 'ar' ? 'الرجاء تحميل ملف الماستر أولاً!' : 'Please load master file first!');
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const newOnes = [];
+            const inMaster = [];
+            const noUid = [];
+            const dups = [];
+            const seen = new Set();
+            lines.forEach(line => {
+                const { uid } = getUidFast(line);
+                if (!uid) { noUid.push(line); return; }
+                if (seen.has(uid)) { dups.push(line); return; }
+                seen.add(uid);
+                if (masterList.has(uid)) inMaster.push(line);
+                else newOnes.push(line);
+            });
+            document.getElementById('outputLive').value = newOnes.join('\n');
+            document.getElementById('outputDead').value = inMaster.join('\n');
+            document.getElementById('outputBad').value = noUid.join('\n');
+            document.getElementById('outputDups').value = dups.join('\n');
+            document.getElementById('countBoxLive').innerText = newOnes.length;
+            document.getElementById('countBoxDead').innerText = inMaster.length;
+            document.getElementById('countBoxBad').innerText = noUid.length;
+            document.getElementById('countBoxDups').innerText = dups.length;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASSWORD ENGINEERING
+        // ═══════════════════════════════════════════════════════════════
+        function processPasswords() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const doReverse = document.getElementById('passReverse').checked;
+            const doCap = document.getElementById('passCapitalize').checked;
+            const doDob = document.getElementById('passDob').checked;
+            const doNums = document.getElementById('passAddNums').checked;
+            const engineered = [];
+            const original = [];
+            const dobList = [];
+            const allResults = [];
+            const dobRegex = /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{6,8})/;
+            lines.forEach(line => {
+                const parts = line.split(/[|:;,\t]+/);
+                const uid = parts[0] ? parts[0].trim() : '';
+                const pass = parts[1] ? parts[1].trim() : '';
+                if (!pass) return;
+                original.push(`${uid}|${pass}`);
+                let variants = [pass];
+                if (doReverse) variants.push(pass.split('').reverse().join(''));
+                if (doCap) variants.push(pass.charAt(0).toUpperCase() + pass.slice(1));
+                if (doNums) { variants.push(pass + '123'); variants.push(pass + '1234'); variants.push('123' + pass); }
+                variants.forEach(v => engineered.push(`${uid}|${v}`));
+                if (doDob) {
+                    const dobMatch = line.match(dobRegex);
+                    if (dobMatch) dobList.push(`${uid}|${dobMatch[0]}`);
+                }
+                allResults.push(...variants.map(v => `${uid}|${v}`));
+            });
+            document.getElementById('outputLive').value = engineered.join('\n');
+            document.getElementById('outputDead').value = original.join('\n');
+            document.getElementById('outputBad').value = dobList.join('\n');
+            document.getElementById('outputDups').value = allResults.join('\n');
+            document.getElementById('countBoxLive').innerText = engineered.length;
+            document.getElementById('countBoxDead').innerText = original.length;
+            document.getElementById('countBoxBad').innerText = dobList.length;
+            document.getElementById('countBoxDups').innerText = allResults.length;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EXCEL CONVERT
+        // ═══════════════════════════════════════════════════════════════
+        function handleMainFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => { inputElem.value = e.target.result; };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const wb = XLSX.read(e.target.result, { type: 'binary' });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                    const lines = rows.map(row => row.join('|')).filter(r => r.trim() && r !== '|');
+                    inputElem.value = lines.join('\n');
+                    document.getElementById('outputExcel').value = lines.join('\n');
+                } catch (err) {
+                    alert('Error reading Excel file: ' + err.message);
+                }
+            };
+            reader.readAsBinaryString(file);
+            event.target.value = '';
+        }
+
+        function exportTxtToExcelSheet() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            // Show in output textarea
+            document.getElementById('outputExcel').value = lines.join('\n');
+            // Create Excel
+            const rows = lines.map(line => line.split(/[|:;,\t]+/));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Accounts');
+            XLSX.writeFile(wb, 'AccountVault_Export.xlsx');
+        }
+
+        function exportCurrentToExcel() {
+            const raw = document.getElementById('outputExcel').value.trim();
+            if (!raw) return;
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const rows = lines.map(line => line.split(/[|:;,\t]+/));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            XLSX.utils.book_append_sheet(wb, ws, 'Accounts');
+            XLSX.writeFile(wb, 'AccountVault_Export.xlsx');
+        }
+
+        function convertExcelToTxt() {
+            // alias
+            const raw = document.getElementById('outputExcel').value.trim();
+            if (!raw) return;
+            downloadTxt('outputExcel', 'converted.txt');
+        }
+
+        function standardizeToUidPassCookies(line) {
+            const { uid } = getUidFast(line);
+            const parts = line.split(/[|:;,\t]+/);
+            const pass = parts[1] ? parts[1].trim() : '';
+            return uid ? `${uid}|${pass}` : line;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SPLIT
+        // ═══════════════════════════════════════════════════════════════
+        function runSplitter() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const linesPerFile = parseInt(document.getElementById('splitLinesPerFile').value) || 100;
+            splitChunks = [];
+            for (let i = 0; i < lines.length; i += linesPerFile) {
+                splitChunks.push(lines.slice(i, i + linesPerFile));
+            }
+            if (splitChunks.length === 0) return;
+            // Show preview of first chunk
+            document.getElementById('outputSplitPreview').value = splitChunks[0].join('\n');
+            // Show stats
+            const statsEl = document.getElementById('splitStats');
+            const msg = currentLang === 'ar'
+                ? `✅ تم التقسيم إلى ${splitChunks.length} ملف بمعدل ${linesPerFile} سطر/ملف — إجمالي: ${lines.length} سطر`
+                : `✅ Split into ${splitChunks.length} files @ ${linesPerFile} lines/file — Total: ${lines.length} lines`;
+            statsEl.textContent = msg;
+            // Enable download button
+            const dlBtn = document.getElementById('splitDownloadBtn');
+            dlBtn.disabled = false;
+        }
+
+        async function downloadSplitZip() {
+            if (!splitChunks || splitChunks.length === 0) return alert(currentLang === 'ar' ? 'قم بالتقسيم أولاً!' : 'Run splitter first!');
+            if (typeof JSZip === 'undefined') {
+                alert('JSZip not loaded. Downloading files individually...');
+                splitChunks.forEach((chunk, i) => {
+                    const content = chunk.join('\n');
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `Flash_Part_${i + 1}.txt`;
+                    a.click();
+                });
+                return;
+            }
+            const zip = new JSZip();
+            splitChunks.forEach((chunk, i) => {
+                zip.file(`Flash_Part_${i + 1}.txt`, chunk.join('\n'));
+            });
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `AccountVault_Split_${splitChunks.length}parts.zip`;
+            a.click();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FILTER
+        // ═══════════════════════════════════════════════════════════════
+        function getFilterLines() {
+            return inputElem.value.trim().split('\n').map(l => l.trim()).filter(Boolean);
+        }
+
+        function runFilter(type) {
+            const lines = getFilterLines();
+            if (!lines.length) return alert(DICTIONARY[currentLang].emptyAlert);
+            let results = [];
+            if (type === 'gmail') {
+                results = lines.filter(l => /@gmail\.com/i.test(l));
+                document.getElementById('outputGmail').value = results.join('\n');
+                document.getElementById('gmailCount').textContent = results.length;
+            } else if (type === 'hotmail') {
+                results = lines.filter(l => /@hotmail\.com|@outlook\.com|@live\.com/i.test(l));
+                document.getElementById('outputHotmail').value = results.join('\n');
+                document.getElementById('hotmailCount').textContent = results.length;
+            } else if (type === 'yahoo') {
+                results = lines.filter(l => /@yahoo\.com|@yahoo\./i.test(l));
+                document.getElementById('outputYahoo').value = results.join('\n');
+                document.getElementById('yahooCount').textContent = results.length;
+            } else if (type === 'other') {
+                results = lines.filter(l => !/@gmail\.com|@hotmail\.com|@outlook\.com|@live\.com|@yahoo\.com|@yahoo\./i.test(l));
+                document.getElementById('outputOther').value = results.join('\n');
+                document.getElementById('otherCount').textContent = results.length;
+            }
+        }
+
+        function runFilterAll() {
+            const lines = getFilterLines();
+            if (!lines.length) return alert(DICTIONARY[currentLang].emptyAlert);
+            const gmail = lines.filter(l => /@gmail\.com/i.test(l));
+            const hotmail = lines.filter(l => /@hotmail\.com|@outlook\.com|@live\.com/i.test(l));
+            const yahoo = lines.filter(l => /@yahoo\.com|@yahoo\./i.test(l));
+            const other = lines.filter(l => !/@gmail\.com|@hotmail\.com|@outlook\.com|@live\.com|@yahoo\.com|@yahoo\./i.test(l));
+            document.getElementById('outputGmail').value = gmail.join('\n');
+            document.getElementById('outputHotmail').value = hotmail.join('\n');
+            document.getElementById('outputYahoo').value = yahoo.join('\n');
+            document.getElementById('outputOther').value = other.join('\n');
+            document.getElementById('gmailCount').textContent = gmail.length;
+            document.getElementById('hotmailCount').textContent = hotmail.length;
+            document.getElementById('yahooCount').textContent = yahoo.length;
+            document.getElementById('otherCount').textContent = other.length;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TOOLS — SHUFFLE / SORT
+        // ═══════════════════════════════════════════════════════════════
+        function shuffleList() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            // Fisher-Yates shuffle
+            for (let i = lines.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [lines[i], lines[j]] = [lines[j], lines[i]];
+            }
+            const result = lines.join('\n');
+            inputElem.value = result;
+            document.getElementById('outputTools').value = result;
+        }
+
+        function sortList(descending) {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            lines.sort((a, b) => {
+                const uidA = getUidFast(a).uid || a;
+                const uidB = getUidFast(b).uid || b;
+                const numA = /^\d+$/.test(uidA) ? BigInt(uidA) : null;
+                const numB = /^\d+$/.test(uidB) ? BigInt(uidB) : null;
+                if (numA !== null && numB !== null) {
+                    if (numA < numB) return descending ? 1 : -1;
+                    if (numA > numB) return descending ? -1 : 1;
+                    return 0;
+                }
+                return descending ? uidB.localeCompare(uidA) : uidA.localeCompare(uidB);
+            });
+            const result = lines.join('\n');
+            inputElem.value = result;
+            document.getElementById('outputTools').value = result;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // TOOLS — 2FA EXTRACTOR
+        // ═══════════════════════════════════════════════════════════════
+        function extract2FA() {
+            const raw = inputElem.value.trim();
+            if (!raw) return alert(DICTIONARY[currentLang].emptyAlert);
+            const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+            const regex2FA = /\b([A-Z2-7]{16}|[A-Z2-7]{32})\b/i;
+            const matches = [];
+            lines.forEach(line => {
+                const m = line.match(regex2FA);
+                if (m) {
+                    // Highlight the key
+                    const highlighted = line.replace(regex2FA, `[2FA:$1]`);
+                    matches.push(highlighted);
+                }
+            });
+            const countMsg = currentLang === 'ar'
+                ? `✅ وُجد ${matches.length} سطر يحتوي على مفتاح 2FA:\n\n`
+                : `✅ Found ${matches.length} lines with 2FA keys:\n\n`;
+            document.getElementById('outputTools').value = matches.length > 0
+                ? countMsg + matches.join('\n')
+                : (currentLang === 'ar' ? '❌ لا توجد مفاتيح 2FA في القائمة' : '❌ No 2FA keys found in list');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UTILITIES
+        // ═══════════════════════════════════════════════════════════════
+        function copyBox(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.select();
+            document.execCommand('copy');
+            // Flash effect
+            const originalBorder = el.parentElement.parentElement.style.borderColor;
+            el.parentElement.parentElement.style.borderColor = 'rgba(16,185,129,0.6)';
+            setTimeout(() => { el.parentElement.parentElement.style.borderColor = originalBorder; }, 600);
+        }
+
+        function downloadTxt(id, filename) {
+            const el = document.getElementById(id);
+            if (!el || !el.value.trim()) return;
+            const blob = new Blob([el.value], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+    </script>
+</body>
+
+</html>
